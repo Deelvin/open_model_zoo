@@ -1,17 +1,20 @@
 models:
   - name: yolo-v3-tf
-
     launchers:
-      - framework: tf
-        model:   yolo-v3.pb
+      - framework: tvm
+        model: /Users/admin/workspace/open_model_zoo/models/tvm_compiled/yolo-v3-tf/exec_yolo-v3-tf.so
+        device: cpu
+        session: local
+        vm: true
         inputs:
           - name: 'input_1'
             type: INPUT
             shape: 1,416,416,3
-        output_names:
-          - conv2d_58/BiasAdd
-          - conv2d_66/BiasAdd
-          - conv2d_74/BiasAdd
+            layout: NHWC
+        outputs:
+            - conv2d_58/BiasAdd
+            - conv2d_66/BiasAdd
+            - conv2d_74/BiasAdd
         adapter:
           type: yolo_v3
           anchors: "10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326"
@@ -34,7 +37,7 @@ models:
             std: 255.0
           - type: resize
             size: 416
-
+          
         postprocessing:
           - type: resize_prediction_boxes
           - type: filter
@@ -51,49 +54,13 @@ models:
             integral: 11point
             ignore_difficult: true
             presenter: print_scalar
+            reference: 62.27
+            threshold: 0.5
           - type: coco_precision
             max_detections: 100
             threshold: 0.5
+            reference: 67.7
 
-  - name: yolo-v3-tf
-
-    launchers:
-      - framework: dlsdk
-        adapter:
-          type: yolo_v3
-          anchors: "10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326"
-          num: 9
-          coords: 4
-          classes: 80
-          anchor_masks: [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-          outputs:
-            - conv2d_58/Conv2D/YoloRegion
-            - conv2d_66/Conv2D/YoloRegion
-            - conv2d_74/Conv2D/YoloRegion
-
-    datasets:
-      - name: ms_coco_detection_80_class_without_background
-
-        preprocessing:
-          - type: resize
-            size: 416
-
-        postprocessing:
-          - type: resize_prediction_boxes
-          - type: filter
-            apply_to: prediction
-            min_confidence: 0.001
-            remove_filtered: True
-          - type: nms
-            overlap: 0.5
-          - type: clip_boxes
-            apply_to: prediction
-
-        metrics:
-          - type: map
-            integral: 11point
-            ignore_difficult: true
-            presenter: print_scalar
-          - type: coco_precision
-            max_detections: 100
-            threshold: 0.5
+        annotation: /Users/admin/workspace/scripts/annotations/COCO/COCO_10/mscoco_detection.pickle
+        data_source: /Users/admin/workspace/scripts/datasets/COCO/COCO/val2017
+        dataset_meta: /Users/admin/workspace/scripts/annotations/COCO/COCO_10/mscoco_detection.json
